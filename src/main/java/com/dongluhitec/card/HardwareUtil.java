@@ -64,7 +64,7 @@ public class HardwareUtil {
 			deviceName = dom.getRootElement().element("monitor").element("device")
 					.element("deviceName").getText();
 
-			String value = "<dongluCarpark><publicKey>publicKey</publicKey></dongluCarpark>";
+			String value = "<dongluCarpark type=\"result\"><result>true</result></dongluCarpark>";
 			writeMsg(session, value);
 			return value;
 		}catch(Exception e){
@@ -90,7 +90,7 @@ public class HardwareUtil {
 
 	public static String responseDeviceControl(IoSession session, Document dom) {
 		try{
-			String value = "<dongluCarpark><publicKey>publicKey</publicKey></dongluCarpark>";
+			String value = "<dongluCarpark type=\"result\"><result>true</result></dongluCarpark>";
 			writeMsg(session, value);
 			return value;
 		}catch(Exception e){

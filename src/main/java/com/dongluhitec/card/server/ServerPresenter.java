@@ -199,7 +199,6 @@ public class ServerPresenter {
 			dongluCarpark.addAttribute("type", "publicKey");
 			Element publicKey = dongluCarpark.addElement("publicKey");
 			publicKey.setText(RSAUtils.getPublicKeyString());
-			serverUI.println_encode("发送消息明文"+document.getRootElement().asXML());
 			cf.getSession().write(document.getRootElement().asXML());
 		}catch(Exception e){
 			CommonUI.error("错误", "交换密钥失败");
