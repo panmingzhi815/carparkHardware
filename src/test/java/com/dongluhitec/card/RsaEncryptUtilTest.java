@@ -4,71 +4,32 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class RsaEncryptUtilTest {
-
-	/**
-	 * 小长度测试
-	 */
-	@Test
-	public void test1(){
-		String plainText = "1234567890";
-
-		System.out.println("加密内容:"+plainText);
-		System.out.println("加密长度:"+plainText.length());
-		
-		RsaEncryptUtil instance = RsaEncryptUtil.getInstance();
-		byte[] encode = instance.encode(plainText.getBytes(), instance.getPublicKey());
-		byte[] decode = instance.decode(encode);
-		Assert.assertEquals(plainText, new String(decode));
-	}
 	
-	/**
-	 * 更长度的分片测试
-	 */
 	@Test
-	public void test2(){
-		String plainText = "";
-		for(int i=0;i<500;i++){
-			plainText += i;
-		}
-		System.out.println("加密内容:"+plainText);
-		System.out.println("加密长度:"+plainText.length());
-		
-		RsaEncryptUtil instance = RsaEncryptUtil.getInstance();
-		byte[] encode = instance.encode(plainText.getBytes(), instance.getPublicKey());
-		byte[] decode = instance.decode(encode);
-		Assert.assertEquals(plainText, new String(decode));
+	public void test1() throws Exception{
+        String plaintext = "<station><account>donglu</account><password>liuhanzhong</password><stationName>前门岗亭</stationName><stationIP>192.168.1.36</stationIP><stationTime>2014-05-19 10:37:44</stationTime></station><monitor><device><deviceName>测试设备1</deviceName><deviceInOutType>true</deviceInOutType><deviceInOutType>true</deviceInOutType><deviceDisplayAndVoiceOutside>true</deviceDisplayAndVoiceOutside><deviceDisplaySupportChinese>true</deviceDisplaySupportChinese></device></monitor>";
+		String cipherText = RSAUtils.encrypt(plaintext, RSAUtils.getPublicKey());
+        String plainText = RSAUtils.decrypt(cipherText, RSAUtils.getPrivateKey());
+        Assert.assertEquals(plaintext, plainText);
 	}
 	
 	@Test
-	public void test3(){
-		String plainText = "1234567890";
-
-		System.out.println("加密内容:"+plainText);
-		System.out.println("加密长度:"+plainText.length());
-		
-		RsaEncryptUtil instance = RsaEncryptUtil.getInstance();
-		String encode = instance.encode(plainText, instance.getPublicKey());
-		String decode = instance.decode(encode);
-		Assert.assertEquals(plainText, decode);
+	public void test2() throws Exception{
+        String plaintext = "专门针对中文字符进行测试";
+		String cipherText = RSAUtils.encrypt(plaintext, RSAUtils.getPublicKey());
+        String plainText = RSAUtils.decrypt(cipherText, RSAUtils.getPrivateKey());
+        Assert.assertEquals(plaintext, plainText);
 	}
 	
-	/**
-	 * 更长度的分片测试
-	 */
 	@Test
-	public void test4(){
-		String plainText = "";
-		for(int i=0;i<3;i++){
-			plainText += "<a>123</a>";
-		}
-		System.out.println("加密明文内容:"+plainText);
-		System.out.println("加密明文长度:"+plainText.length());
-		
-		RsaEncryptUtil instance = RsaEncryptUtil.getInstance();
-		String encode = instance.encode(plainText, instance.getPublicKey());
-		System.out.println("密文内容:"+encode);
-		String decode = instance.decode(encode);
-		Assert.assertEquals(plainText, decode);
+	public void test3() throws Exception{
+        String plaintext = "专门针对长中文字符进行测试";
+        for(int i=0;i<10;i++){
+        	plaintext += plaintext;
+        }
+		String cipherText = RSAUtils.encrypt(plaintext, RSAUtils.getPublicKey());
+        String plainText = RSAUtils.decrypt(cipherText, RSAUtils.getPrivateKey());
+        Assert.assertEquals(plaintext, plainText);
 	}
 	
 }

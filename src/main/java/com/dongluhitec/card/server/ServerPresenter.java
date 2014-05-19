@@ -1,32 +1,26 @@
 package com.dongluhitec.card.server;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.util.Date;
 
-import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
-import org.apache.mina.core.future.CloseFuture;
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
+import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.eclipse.swt.widgets.Display;
 
 import com.dongluhitec.card.CommonUI;
 import com.dongluhitec.card.HardwareUtil;
-import com.dongluhitec.card.RsaEncryptUtil;
-import com.dongluhitec.card.XmlTypeEnum;
-import com.google.common.util.concurrent.UninterruptibleFuture;
+import com.dongluhitec.card.RSAUtils;
 
 public class ServerPresenter {
 
@@ -45,7 +39,7 @@ public class ServerPresenter {
 
 			acceptor.getFilterChain().addLast("logger", new LoggingFilter());
 			//指定编码过滤器 
-			acceptor.getFilterChain().addLast( "codec", new ProtocolCodecFilter( new TextLineCodecFactory( Charset.forName( "UTF-8" ))));
+			acceptor.getFilterChain().addLast( "codec", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
 			acceptor.setHandler(new AcceptorMessageHandler());
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
@@ -72,7 +66,7 @@ public class ServerPresenter {
 			if(checkSubpackage == null){
 				return;
 			}
-			serverUI.println("收到消息:" + checkSubpackage);
+			serverUI.println("收到消息密文:" + checkSubpackage);
 			if(checkSubpackage.startsWith("publicKey", 21)){
 				HardwareUtil.responsePublicKey_server(session,checkSubpackage);
 				return;
@@ -81,24 +75,24 @@ public class ServerPresenter {
 			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(checkSubpackage));
 			Element rootElement = dom.getRootElement();
 			
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					serverUI.println_encode("收到消息明文"+dom.getRootElement().asXML());
+				}
+			});
+			
 			if(rootElement.attributeValue("type").equals("deviceControl")){
-				HardwareUtil.responseDeviceControl(session,dom);
+				String responseDeviceControl = HardwareUtil.responseDeviceControl(session,dom);
+				serverUI.println_encode("发送消息明文"+responseDeviceControl);
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						serverUI.state2Xml(dom);
-						serverUI.println_encode(dom.getRootElement().asXML());
 					}
 				});
-				return;
 			}
 			
 			if(rootElement.attributeValue("type").equals("result")){
-				Display.getDefault().asyncExec(new Runnable() {
-					public void run() {
-						serverUI.println_encode(dom.getRootElement().asXML());
-					}
-				});
-				return;
+				
 			}
 		}
 
@@ -106,7 +100,7 @@ public class ServerPresenter {
 		public void messageSent(IoSession session, Object message)
 				throws Exception {
 			
-			serverUI.println("发送消息:" + message);
+			serverUI.println("发送消息密文:" + message);
 			super.messageSent(session, message);
 		}
 
@@ -139,7 +133,7 @@ public class ServerPresenter {
 
 			connector.getFilterChain().addLast("logger", new LoggingFilter());
 			//指定编码过滤器 
-			connector.getFilterChain().addLast( "codec", new ProtocolCodecFilter( new TextLineCodecFactory( Charset.forName( "UTF-8" ))));
+			connector.getFilterChain().addLast( "codec", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
 			// 设定服务器端的消息处理器:一个 SamplMinaServerHandler 对象,
 			connector.setHandler(new AcceptorMessageHandler());
 			// Set connect timeout.
@@ -189,6 +183,7 @@ public class ServerPresenter {
 			device.addElement("deviceInOutType").setText(deviceDisplayAndVoiceInside+"");
 			device.addElement("deviceDisplayAndVoiceOutside").setText(deviceDisplayAndVoiceOutside+"");
 			device.addElement("deviceDisplaySupportChinese").setText(deviceDisplaySupportChinese+"");
+			serverUI.println_encode("发送消息明文"+dom.getRootElement().asXML());
 			HardwareUtil.writeMsg(cf.getSession(), dom.getRootElement().asXML());
 		} catch (Exception e) {
 			CommonUI.error("错误", "发送设备信息失败");
@@ -203,7 +198,8 @@ public class ServerPresenter {
 			Element dongluCarpark = document.addElement("dongluCarpark");
 			dongluCarpark.addAttribute("type", "publicKey");
 			Element publicKey = dongluCarpark.addElement("publicKey");
-			publicKey.setText(RsaEncryptUtil.getInstance().getPublicKey());
+			publicKey.setText(RSAUtils.getPublicKeyString());
+			serverUI.println_encode("发送消息明文"+document.getRootElement().asXML());
 			cf.getSession().write(document.getRootElement().asXML());
 		}catch(Exception e){
 			CommonUI.error("错误", "交换密钥失败");
@@ -222,12 +218,16 @@ public class ServerPresenter {
 			
 			root.addElement("cardSerialNumber").setText(cardNO);
 			root.addElement("CardReaderID").setText("");
-			
+			serverUI.println_encode("发送消息明文"+document.getRootElement().asXML());
 			HardwareUtil.writeMsg(cf.getSession(), document.getRootElement().asXML());
 		}catch(Exception e){
 			CommonUI.error("错误", "发送卡片信息失败");
 			e.printStackTrace();
 		}
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(RSAUtils.getPublicKeyString());
 	}
 
 }

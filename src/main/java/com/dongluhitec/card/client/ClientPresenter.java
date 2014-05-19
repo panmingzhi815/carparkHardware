@@ -1,14 +1,13 @@
 package com.dongluhitec.card.client;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
+import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.dom4j.Document;
@@ -18,8 +17,6 @@ import org.eclipse.swt.widgets.Display;
 
 import com.dongluhitec.card.CommonUI;
 import com.dongluhitec.card.HardwareUtil;
-import com.dongluhitec.card.RsaEncryptUtil;
-import com.dongluhitec.card.XmlTypeEnum;
 
 public class ClientPresenter {
 
@@ -34,7 +31,7 @@ public class ClientPresenter {
 
 			acceptor.getFilterChain().addLast("logger", new LoggingFilter());
 			//指定编码过滤器 
-			acceptor.getFilterChain().addLast( "codec", new ProtocolCodecFilter( new TextLineCodecFactory( Charset.forName( "UTF-8" ))));
+			acceptor.getFilterChain().addLast( "codec", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
 			acceptor.setHandler(new MessageHandler());
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
@@ -61,7 +58,7 @@ public class ClientPresenter {
 			if(checkSubpackage == null){
 				return;
 			}
-			clientUI.println("收到消息:" + checkSubpackage);
+			clientUI.println_encode("收到消息密文:" + checkSubpackage);
 			if(checkSubpackage.startsWith("publicKey", 21)){
 				HardwareUtil.responsePublicKey(session,checkSubpackage);
 				return;
@@ -69,10 +66,10 @@ public class ClientPresenter {
 			
 			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(checkSubpackage));
 			Element rootElement = dom.getRootElement();
-			
+			clientUI.println("收到消息明文:" + rootElement.asXML());
 			if(checkSubpackage.startsWith("deviceInfo", 21)){
-				HardwareUtil.responseDeviceInfo(session,dom);
-				clientUI.println_encode("收到消息:" + rootElement.asXML());
+				String responseDeviceInfo = HardwareUtil.responseDeviceInfo(session,dom);
+				clientUI.println("发送消息明文:"+responseDeviceInfo);
 				return;
 			}
 			
@@ -80,8 +77,8 @@ public class ClientPresenter {
 				Display.getDefault().asyncExec(new Runnable() {
 					
 					public void run() {
-						HardwareUtil.responseSwipeCardInfo(session,dom,clientUI.state2Xml());
-						clientUI.println_encode("收到消息:" + dom.getRootElement().asXML());
+						String responseSwipeCardInfo = HardwareUtil.responseSwipeCardInfo(session,dom,clientUI.state2Xml());
+						clientUI.println("发送消息明文:" + responseSwipeCardInfo);
 					}
 				});				
 				return;
@@ -91,7 +88,7 @@ public class ClientPresenter {
 		@Override
 		public void messageSent(IoSession session, Object message)
 				throws Exception {
-			clientUI.println("发送消息:" + message);
+			clientUI.println_encode("发送消息:" + message);
 		}
 
 		@Override

@@ -7,17 +7,15 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-
-import com.dongluhitec.card.RsaEncryptUtil;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 
 public class ClientUI {
 	private ClientPresenter presenter;
@@ -203,14 +201,14 @@ public class ClientUI {
 		button_11.setText("\u91CD\u7F6E");
 		
 		Group group_1 = new Group(shlv, SWT.NONE);
-		group_1.setText("\u5BC6\u6587\u6570\u636E");
+		group_1.setText("密文");
 		group_1.setBounds(10, 221, 220, 235);
 		
 		text_2 = new Text(group_1, SWT.BORDER | SWT.WRAP | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
 		text_2.setBounds(10, 27, 201, 198);
 		
 		Group group_2 = new Group(shlv, SWT.NONE);
-		group_2.setText("\u660E\u6587\u6570\u636E");
+		group_2.setText("明文");
 		group_2.setBounds(236, 221, 196, 235);
 		
 		text_3 = new Text(group_2, SWT.BORDER | SWT.WRAP | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
@@ -231,10 +229,10 @@ public class ClientUI {
 	public void println(final String text){
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				if(text_2.getText().length() > 5000){
-					text_2.setText("");
+				if(text_3.getText().length() > 5000){
+					text_3.setText("");
 				}
-				text_2.append("\n"+text+"\n");
+				text_3.append("\n"+text+"\n");
 			}
 		});
 	}

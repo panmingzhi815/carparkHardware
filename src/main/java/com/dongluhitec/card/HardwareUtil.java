@@ -3,19 +3,11 @@ package com.dongluhitec.card;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.mina.core.session.IoSession;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 import com.google.common.base.Strings;
 
@@ -25,7 +17,7 @@ public class HardwareUtil {
 
 	private static IoSession currentSession;
 	private static String deviceName;
-	private static String publicKey;
+	public static String he_publicKey;
 
 	public static String checkSubpackage(IoSession session, Object message) {
 		String msg = ((String) message).trim();
@@ -47,8 +39,8 @@ public class HardwareUtil {
 		try {
 			Document dom = DocumentHelper.parseText(message);
 			Element element = dom.getRootElement().element("publicKey");
-			publicKey = element.getStringValue();
-			element.setText(RsaEncryptUtil.getInstance().getPublicKey());
+			he_publicKey = element.getStringValue();
+			element.setText(RSAUtils.getPublicKeyString());
 			session.write(dom.getRootElement().asXML());
 		} catch (Exception e) {
 			throw new EncryptException("客户端响应公钥失败", e);
@@ -60,70 +52,65 @@ public class HardwareUtil {
 		try {
 			Document dom = DocumentHelper.parseText(message);
 			Element element = dom.getRootElement().element("publicKey");
-			publicKey = element.getStringValue();
+			he_publicKey = element.getStringValue();
 		} catch (Exception e) {
 			throw new EncryptException("服务端响应公钥失败", e);
 		}
 	}
 
-	public static void responseDeviceInfo(IoSession session, Document dom) {
-		currentSession = session;
-		deviceName = dom.getRootElement().element("monitor").element("device")
-				.element("deviceName").getText();
+	public static String responseDeviceInfo(IoSession session, Document dom) {
+		try{
+			currentSession = session;
+			deviceName = dom.getRootElement().element("monitor").element("device")
+					.element("deviceName").getText();
 
-		String value = getValue(XmlTypeEnum.发送成功);
-		writeMsg(session, value);
+			String value = "<dongluCarpark><publicKey>publicKey</publicKey></dongluCarpark>";
+			writeMsg(session, value);
+			return value;
+		}catch(Exception e){
+			throw new EncryptException("响应设备信息失败", e);
+		}
 	}
 
-	public static void responseSwipeCardInfo(IoSession session, Document dom,
+	public static String responseSwipeCardInfo(IoSession session, Document dom,
 			Document dom2) {
-		Element rootElement = dom.getRootElement();
-		String deviceName = rootElement.element("device").element("deviceName")
-				.getText();
+		try{
+			Element rootElement = dom.getRootElement();
+			String deviceName = rootElement.element("device").element("deviceName")
+					.getText();
 
-		dom2.getRootElement().addElement("device").addElement("deviceName")
-				.setText(deviceName);
-		;
-		writeMsg(session, dom2.getRootElement().asXML());
+			dom2.getRootElement().addElement("device").addElement("deviceName")
+					.setText(deviceName);
+			writeMsg(session, dom2.getRootElement().asXML());
+			return dom2.getRootElement().asXML();
+		}catch(Exception e){
+			throw new EncryptException("响应刷卡", e);
+		}
 	}
 
-	public static void responseDeviceControl(IoSession session, Document dom) {
-		String value = getValue(XmlTypeEnum.发送成功);
-		writeMsg(session, value);
+	public static String responseDeviceControl(IoSession session, Document dom) {
+		try{
+			String value = "<dongluCarpark><publicKey>publicKey</publicKey></dongluCarpark>";
+			writeMsg(session, value);
+			return value;
+		}catch(Exception e){
+			throw new EncryptException("响应设备控制失败", e);
+		}
 	}
 
 	public static void requestDeviceControl(Document state2Xml) {
-		if (currentSession == null || currentSession.isConnected() == false
-				|| Strings.isNullOrEmpty(deviceName)) {
-			return;
+		try{
+			if (currentSession == null || currentSession.isConnected() == false
+					|| Strings.isNullOrEmpty(deviceName)) {
+				return;
+			}
+			Element rootElement = state2Xml.getRootElement();
+			Element deviceElement = rootElement.addElement("device");
+			deviceElement.addElement("deviceName").setText(deviceName);
+			writeMsg(currentSession, rootElement.asXML());
+		}catch(Exception e){
+			throw new EncryptException("请求设备控制失败", e);
 		}
-		Element rootElement = state2Xml.getRootElement();
-		Element deviceElement = rootElement.addElement("device");
-		deviceElement.addElement("deviceName").setText(deviceName);
-		writeMsg(currentSession, rootElement.asXML());
-	}
-
-	public static String getValue(XmlTypeEnum xmlTypeEnum) {
-		switch (xmlTypeEnum) {
-		case 交换密钥:
-			return "<dongluCarpark><publicKey>publicKey</publicKey></dongluCarpark>";
-		case 发送设备信息:
-			String value = "<dongluCarpark>"
-					+ "<station><account>dongluhitec</account><password>liuhanzhong</password><stationName>前门岗亭</stationName><stationIP>192.168.1.36</stationIP><stationTime>2014-12-22 12:23:30</stationTime></station>"
-					+ "<monitor>"
-					+ "<device>"
-					+ "<deviceName>设备名称1</deviceName>"
-					+ "<deviceInOutType>in</deviceInOutType>"
-					+ "<deviceDisplayAndVoiceInside>true</deviceDisplayAndVoiceInside>"
-					+ "<deviceDisplayAndVoiceOutside>true</deviceDisplayAndVoiceOutside>"
-					+ "<deviceDisplaySupportChinese>true</deviceDisplaySupportChinese>"
-					+ "</device>" + "</monitor>" + "</dongluCarpark>";
-		case 发送成功:
-			return "<dongluCarpark type=\"result\"><result>true</result></dongluCarpark>";
-		default:
-			break;
-		}
-		return "";
 	}
 
 	public static String formatDateTime(Date date) {
@@ -151,13 +138,13 @@ public class HardwareUtil {
 
 	public static String decode(String msg) {
 		try{
+			System.out.println("decode str:"+msg);
 			int indexOf = msg.indexOf(">")+1;
 			String subStr = msg.substring(indexOf, msg.length()-16);
 			
-			byte[] decodeBuffer = new BASE64Decoder().decodeBuffer(subStr);
-			RsaEncryptUtil instance = RsaEncryptUtil.getInstance();
-			String decode = instance.decode(new String(decodeBuffer,"ISO-8859-1"));
-			String replace = msg.replace(subStr, decode);
+			String decrypt = RSAUtils.decrypt(subStr, RSAUtils.getPrivateKey());
+			String replace = msg.replace(subStr, decrypt);
+			System.out.println("decoded str:"+msg);
 			return replace;
 		}catch(Exception e){
 			throw new EncryptException("解密失败", e);
@@ -166,12 +153,12 @@ public class HardwareUtil {
 
 	public static String encode(String msg) {
 		try{
+			System.out.println("encode str:"+msg);
 			int indexOf = msg.indexOf(">")+1;
 			String subStr = msg.substring(indexOf, msg.length()-16);
-			RsaEncryptUtil instance = RsaEncryptUtil.getInstance();
-			String encode = instance.encode(subStr, instance.getPublicKey());
-			String encode2 = new BASE64Encoder().encode(encode.getBytes("ISO-8859-1"));
-			String replace = msg.replace(subStr,encode2);
+			String encrypt = RSAUtils.encrypt(subStr, RSAUtils.getPublicKey(he_publicKey));
+			String replace = msg.replace(subStr,encrypt);
+			System.out.println("encoded str:"+replace);
 			return replace;
 		}catch(Exception e){
 			e.printStackTrace();
@@ -180,6 +167,9 @@ public class HardwareUtil {
 	}
 
 	public static void main(String[] args) {
+		String a = "123";
+		String b = a.replace("1", "1235");
+		System.out.println(b);
 	}
 
 }
