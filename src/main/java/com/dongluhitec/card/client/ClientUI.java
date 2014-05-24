@@ -35,6 +35,7 @@ public class ClientUI {
 	private Button button_outsideScreenOpen;
 	private Button button_outsideScreenClose;
 	private Button button_insideVoiceClose;
+	private Button rb_false;
 
 	/**
 	 * Launch the application.
@@ -148,21 +149,25 @@ public class ClientUI {
 		
 		Label label_3 = new Label(composite_4, SWT.NONE);
 		label_3.setAlignment(SWT.RIGHT);
-		label_3.setBounds(17, 6, 39, 12);
+		label_3.setBounds(17, 4, 39, 12);
 		label_3.setText("\u95F8\u673A");
 		
 		rb_up = new Button(composite_4, SWT.RADIO);
-		rb_up.setBounds(63, 4, 39, 16);
+		rb_up.setBounds(63, 2, 39, 16);
 		rb_up.setText("起");
 		rb_up.setSelection(true);
 		
 		rb_down = new Button(composite_4, SWT.RADIO);
 		rb_down.setText("落");
-		rb_down.setBounds(113, 4, 39, 16);
+		rb_down.setBounds(113, 2, 39, 16);
 		
 		rb_stop = new Button(composite_4, SWT.RADIO);
 		rb_stop.setText("停");
-		rb_stop.setBounds(158, 4, 39, 16);
+		rb_stop.setBounds(158, 2, 39, 16);
+		
+		rb_false = new Button(composite_4, SWT.RADIO);
+		rb_false.setBounds(200, 2, 39, 16);
+		rb_false.setText("无效");
 		
 		Composite composite_5 = new Composite(group, SWT.BORDER);
 		composite_5.setBounds(10, 119, 390, 30);
@@ -173,7 +178,7 @@ public class ClientUI {
 		
 		text_outsideScreenText = new Text(composite_5, SWT.BORDER);
 		text_outsideScreenText.setBounds(109, 3, 271, 18);
-		text_outsideScreenText.setText("外置显示屏内容");
+		text_outsideScreenText.setText("这是外置显示屏的内容");
 		
 		Composite composite_6 = new Composite(group, SWT.BORDER);
 		composite_6.setBounds(10, 155, 390, 30);
@@ -184,7 +189,7 @@ public class ClientUI {
 		
 		text_insideScreenText = new Text(composite_6, SWT.BORDER);
 		text_insideScreenText.setBounds(109, 3, 271, 18);
-		text_insideScreenText.setText("外置显示屏内容");
+		text_insideScreenText.setText("这是内置显示屏的内容");
 		
 		Button btnNewButton = new Button(group, SWT.NONE);
 		btnNewButton.addSelectionListener(new SelectionAdapter() {
@@ -263,6 +268,9 @@ public class ClientUI {
 		}
 		if(rb_stop.getSelection() == true){
 			gate = "stop";
+		}
+		if(rb_false.getSelection() == true){
+			gate = "false";
 		}
 		controlElement.addElement("gate").setText(gate);
 		
