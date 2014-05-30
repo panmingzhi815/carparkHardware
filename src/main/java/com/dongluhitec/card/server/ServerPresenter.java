@@ -1,6 +1,7 @@
 package com.dongluhitec.card.server;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.Date;
 
 import org.apache.mina.core.future.ConnectFuture;
@@ -10,6 +11,7 @@ import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
+import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
@@ -21,6 +23,10 @@ import org.eclipse.swt.widgets.Display;
 import com.dongluhitec.card.CommonUI;
 import com.dongluhitec.card.HardwareUtil;
 import com.dongluhitec.card.RSAUtils;
+import com.dongluhitec.card.message.Message;
+import com.dongluhitec.card.message.MessageCodecFactory;
+import com.dongluhitec.card.message.MessageType;
+import com.google.common.base.Strings;
 
 public class ServerPresenter {
 
@@ -39,7 +45,7 @@ public class ServerPresenter {
 
 			acceptor.getFilterChain().addLast("logger", new LoggingFilter());
 			//指定编码过滤器 
-			acceptor.getFilterChain().addLast( "codec", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
+			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new TextLineCodecFactory(Charset.forName("UTF-8"))));
 			acceptor.setHandler(new AcceptorMessageHandler());
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
@@ -63,16 +69,18 @@ public class ServerPresenter {
 		public void messageReceived(IoSession session, Object message)
 				throws Exception {
 			String checkSubpackage = HardwareUtil.checkSubpackage(session, message);
-			if(checkSubpackage == null){
+			if(Strings.isNullOrEmpty(checkSubpackage)){
 				return;
 			}
-			serverUI.println("收到消息密文:" + checkSubpackage);
-			if(checkSubpackage.startsWith("publicKey", 21)){
-				HardwareUtil.responsePublicKey_server(session,checkSubpackage);
+			Message msg = new Message(checkSubpackage);
+			serverUI.println("收到消息密文:" + msg.toString());
+			
+			if(msg.getType() == MessageType.交换密钥){
+				HardwareUtil.responsePublicKey_server(session,msg);
 				return;
 			}
 			
-			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(checkSubpackage));
+			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(msg.getContent()));
 			Element rootElement = dom.getRootElement();
 			
 			Display.getDefault().asyncExec(new Runnable() {
@@ -81,7 +89,7 @@ public class ServerPresenter {
 				}
 			});
 			
-			if(rootElement.attributeValue("type").equals("deviceControl")){
+			if(msg.getType() == MessageType.设备控制){
 				String responseDeviceControl = HardwareUtil.responseDeviceControl(session,dom);
 				serverUI.println_encode("发送消息明文"+responseDeviceControl);
 				Display.getDefault().asyncExec(new Runnable() {
@@ -133,7 +141,7 @@ public class ServerPresenter {
 
 			connector.getFilterChain().addLast("logger", new LoggingFilter());
 			//指定编码过滤器 
-			connector.getFilterChain().addLast( "codec", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
+			connector.getFilterChain().addLast("codec", new ProtocolCodecFilter(new TextLineCodecFactory(Charset.forName("UTF-8"))));
 			// 设定服务器端的消息处理器:一个 SamplMinaServerHandler 对象,
 			connector.setHandler(new AcceptorMessageHandler());
 			// Set connect timeout.
@@ -184,7 +192,9 @@ public class ServerPresenter {
 			device.addElement("deviceDisplayAndVoiceOutside").setText(deviceDisplayAndVoiceOutside+"");
 			device.addElement("deviceDisplaySupportChinese").setText(deviceDisplaySupportChinese+"");
 			serverUI.println_encode("发送消息明文"+dom.getRootElement().asXML());
-			HardwareUtil.writeMsg(cf.getSession(), dom.getRootElement().asXML());
+			String encode = HardwareUtil.encode(dom.getRootElement().asXML());
+			Message msg = new Message(MessageType.设备信息, encode.length(), encode);
+			cf.getSession().write(msg.toString());
 		} catch (Exception e) {
 			CommonUI.error("错误", "发送设备信息失败");
 			e.printStackTrace();
@@ -199,7 +209,9 @@ public class ServerPresenter {
 			dongluCarpark.addAttribute("type", "publicKey");
 			Element publicKey = dongluCarpark.addElement("publicKey");
 			publicKey.setText(RSAUtils.getPublicKeyString());
-			cf.getSession().write(document.getRootElement().asXML());
+			String encode = document.getRootElement().asXML();
+			Message msg = new Message(MessageType.交换密钥, encode.length(), encode);
+			cf.getSession().write(msg.toString());
 		}catch(Exception e){
 			CommonUI.error("错误", "交换密钥失败");
 			e.printStackTrace();
@@ -218,7 +230,9 @@ public class ServerPresenter {
 			root.addElement("cardSerialNumber").setText(cardNO);
 			root.addElement("CardReaderID").setText("");
 			serverUI.println_encode("发送消息明文"+document.getRootElement().asXML());
-			HardwareUtil.writeMsg(cf.getSession(), document.getRootElement().asXML());
+			String encode = HardwareUtil.encode(document.getRootElement().asXML());
+			Message msg = new Message(MessageType.发送卡号, encode.length(), encode);
+			cf.getSession().write(msg.toString());
 		}catch(Exception e){
 			CommonUI.error("错误", "发送卡片信息失败");
 			e.printStackTrace();

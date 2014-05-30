@@ -9,6 +9,8 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 
+import com.dongluhitec.card.message.Message;
+import com.dongluhitec.card.message.MessageType;
 import com.google.common.base.Strings;
 
 public class HardwareUtil {
@@ -21,7 +23,7 @@ public class HardwareUtil {
 
 	public static String checkSubpackage(IoSession session, Object message) {
 		String msg = ((String) message).trim();
-		if (msg.startsWith("<dongluCarpark")) {
+		if (msg.startsWith("<dongluCarpark",10)) {
 			session.setAttribute(MSGKEY, "");
 		}
 		// 在此处对数据的分包进行拼接
@@ -29,28 +31,30 @@ public class HardwareUtil {
 		session.setAttribute(MSGKEY, oldValue + msg);
 		// 如果数据已经完整,早返回整个数据
 		if (msg.endsWith("</dongluCarpark>")) {
-			return (String) session.getAttribute(MSGKEY);
+			return ((String) session.getAttribute(MSGKEY));
 		}
 		// 数据不完整,则返回空
 		return null;
 	}
 
-	public static void responsePublicKey(IoSession session, String message) {
+	public static void responsePublicKey(IoSession session, Message message) {
 		try {
-			Document dom = DocumentHelper.parseText(message);
+			Document dom = DocumentHelper.parseText(message.getContent());
 			Element element = dom.getRootElement().element("publicKey");
 			he_publicKey = element.getStringValue();
 			element.setText(RSAUtils.getPublicKeyString());
-			session.write(dom.getRootElement().asXML());
+			String encode = encode(dom.getRootElement().asXML());
+			Message msg = new Message(MessageType.交换密钥, encode.length(), encode);
+			session.write(msg);
 		} catch (Exception e) {
 			throw new EncryptException("客户端响应公钥失败", e);
 		}
 	}
 
 	public static void responsePublicKey_server(IoSession session,
-			String message) {
+			Message message) {
 		try {
-			Document dom = DocumentHelper.parseText(message);
+			Document dom = DocumentHelper.parseText(message.getContent());
 			Element element = dom.getRootElement().element("publicKey");
 			he_publicKey = element.getStringValue();
 		} catch (Exception e) {
@@ -61,11 +65,14 @@ public class HardwareUtil {
 	public static String responseDeviceInfo(IoSession session, Document dom) {
 		try{
 			currentSession = session;
+			
 			deviceName = dom.getRootElement().element("monitor").element("device")
 					.element("deviceName").getText();
 
 			String value = "<dongluCarpark type=\"result\"><result>true</result></dongluCarpark>";
-			writeMsg(session, value);
+			String encode = encode(value);
+			Message msg = new Message(MessageType.成功, encode.length(), encode);
+			session.write(msg);
 			return value;
 		}catch(Exception e){
 			throw new EncryptException("响应设备信息失败", e);
@@ -81,7 +88,9 @@ public class HardwareUtil {
 
 			dom2.getRootElement().addElement("device").addElement("deviceName")
 					.setText(deviceName);
-			writeMsg(session, dom2.getRootElement().asXML());
+			String encode = encode(dom2.getRootElement().asXML());
+			Message msg = new Message(MessageType.设备控制, encode.length(), encode);
+			session.write(msg);
 			return dom2.getRootElement().asXML();
 		}catch(Exception e){
 			throw new EncryptException("响应刷卡", e);
@@ -91,7 +100,9 @@ public class HardwareUtil {
 	public static String responseDeviceControl(IoSession session, Document dom) {
 		try{
 			String value = "<dongluCarpark type=\"result\"><result>true</result></dongluCarpark>";
-			writeMsg(session, value);
+			String encode = encode(value);
+			Message msg = new Message(MessageType.成功, encode.length(), encode);
+			session.write(msg);
 			return value;
 		}catch(Exception e){
 			throw new EncryptException("响应设备控制失败", e);
@@ -138,13 +149,11 @@ public class HardwareUtil {
 
 	public static String decode(String msg) {
 		try{
-			System.out.println("decode str:"+msg);
 			int indexOf = msg.indexOf(">")+1;
 			String subStr = msg.substring(indexOf, msg.length()-16);
 			
 			String decrypt = RSAUtils.decrypt(subStr, RSAUtils.getPrivateKey());
 			String replace = msg.replace(subStr, decrypt);
-			System.out.println("decoded str:"+msg);
 			return replace;
 		}catch(Exception e){
 			throw new EncryptException("解密失败", e);
@@ -153,12 +162,10 @@ public class HardwareUtil {
 
 	public static String encode(String msg) {
 		try{
-			System.out.println("encode str:"+msg);
 			int indexOf = msg.indexOf(">")+1;
 			String subStr = msg.substring(indexOf, msg.length()-16);
 			String encrypt = RSAUtils.encrypt(subStr, RSAUtils.getPublicKey(he_publicKey));
 			String replace = msg.replace(subStr,encrypt);
-			System.out.println("encoded str:"+replace);
 			return replace;
 		}catch(Exception e){
 			e.printStackTrace();
@@ -167,9 +174,6 @@ public class HardwareUtil {
 	}
 
 	public static void main(String[] args) {
-		String a = "123";
-		String b = a.replace("1", "1235");
-		System.out.println(b);
 	}
 
 }

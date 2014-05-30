@@ -1,12 +1,14 @@
 package com.dongluhitec.card;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -17,24 +19,31 @@ import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.Cipher;
 
+import com.google.common.base.Charsets;
+
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
-public class RSAUtils {
+public class DongluRSAUtil {
 	/**
 	 * 算法名称
 	 */
 	private final static String RSA = "RSA";
+	
+	/**
+	 * 编码
+	 */
+	private final static Charset CHARSET = Charsets.UTF_8;
 
 	/**
 	 * 加密后的字节分隔长度
 	 */
-	private final static int encryptSepLength = 256;
+	private final static int ENCRYPTSEPLENGTH = 256;
 
 	/**
 	 * 明文字节分隔长度
 	 */
-	private final static int plainSepLneght = 100;
+	private final static int PLAINSEPLNEGHT = 117;
 	
 	private static PrivateKey prkey;
 	private static PublicKey pukey;
@@ -58,59 +67,56 @@ public class RSAUtils {
 		return cipher.doFinal(text);
 	}
 
+	@SuppressWarnings("restriction")
 	public final static String encrypt(String text, PublicKey uk) {
-		return text;
-//		StringBuffer sbf = new StringBuffer(200);
-//		try {
-//			text = new BASE64Encoder().encode(text.getBytes("UTF-8"));
-////			text = URLEncoder.encode(text, "UTF-8");// 用这个的原因是为了支持汉字、汉字和英文混排,解密方法中同理
-//			byte[] plainByte = text.getBytes();
-//			ByteArrayInputStream bays = new ByteArrayInputStream(plainByte);
-//			byte[] readByte = new byte[plainSepLneght];
-//			int n = 0;
-//			// 这个位置很恶心人的写了一堆，是为了支持超过117字节，我每次加密100字节。
-//			while ((n = bays.read(readByte)) > 0) {
-//				if (n >= plainSepLneght) {
-//					sbf.append(byte2hex(encrypt(readByte, uk)));
-//				} else {
-//					byte[] tt = new byte[n];
-//					for (int i = 0; i < n; i++) {
-//						tt[i] = readByte[i];
-//					}
-//					sbf.append(byte2hex(encrypt(tt, uk)));
-//				}
-//			}
-//
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		return sbf.toString();
+		StringBuffer sbf = new StringBuffer(200);
+		try {
+			text = new BASE64Encoder().encode(text.getBytes(CHARSET));
+			byte[] plainByte = text.getBytes();
+			ByteArrayInputStream bays = new ByteArrayInputStream(plainByte);
+			byte[] readByte = new byte[PLAINSEPLNEGHT];
+			int n = 0;
+			while ((n = bays.read(readByte)) > 0) {
+				if (n >= PLAINSEPLNEGHT) {
+					byte[] encrypt = encrypt(readByte, uk);
+					sbf.append(byte2hex(encrypt(readByte, uk)));
+				} else {
+					byte[] tt = new byte[n];
+					for (int i = 0; i < n; i++) {
+						tt[i] = readByte[i];
+					}
+					sbf.append(byte2hex(encrypt(tt, uk)));
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return sbf.toString();
 	}
 
+	@SuppressWarnings("restriction")
 	public final static String decrypt(String data, PrivateKey rk) {
-		return data;
-//		String rrr = "";
-//		StringBuffer sb = new StringBuffer(100);
-//		try {
-//			ByteArrayInputStream bais = new ByteArrayInputStream(
-//					data.getBytes());
-//			// 此处之所以是 256，而不是128的原因是因为有一个16进行的转换，所以由128变为了256
-//			byte[] readByte = new byte[256];
-//			int n = 0;
-//			while ((n = bais.read(readByte)) > 0) {
-//				if (n >= encryptSepLength) {
-//					sb.append(new String(decrypt(hex2byte(readByte), rk)));
-//				} else {
-//
-//				}
-//			}
-//			byte[] decodeBuffer = new BASE64Decoder().decodeBuffer(sb.toString());
-//			rrr = new String(decodeBuffer,"UTF-8");
-////			rrr = URLDecoder.decode(sb.toString(), "UTF-8");
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		return rrr;
+		String rrr = "";
+		StringBuffer sb = new StringBuffer(100);
+		try {
+			ByteArrayInputStream bais = new ByteArrayInputStream(data.getBytes());
+			// 此处之所以是 256，而不是128的原因是因为有一个16进行的转换，所以由128变为了256
+			byte[] readByte = new byte[256];
+			int n = 0;
+			while ((n = bais.read(readByte)) > 0) {
+				if (n >= ENCRYPTSEPLENGTH) {
+					sb.append(new String(decrypt(hex2byte(readByte), rk)));
+				} else {
+
+				}
+			}
+			byte[] decodeBuffer = new BASE64Decoder().decodeBuffer(sb.toString());
+			rrr = new String(decodeBuffer,"UTF-8");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return rrr;
 	}
 
 	private static byte[] decrypt(byte[] src, PrivateKey rk) throws Exception {
@@ -157,8 +163,9 @@ public class RSAUtils {
 			PublicKey publicKey = keyFactory.generatePublic(keySpec);
 			return publicKey;
 		} catch (Exception e) {
-			return null;
+			e.printStackTrace();
 		}
+		return null;
 	}
 	
 	public static PublicKey getPublicKey() {

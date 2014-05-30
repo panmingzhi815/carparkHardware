@@ -1,6 +1,7 @@
 package com.dongluhitec.card.client;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.service.IoHandlerAdapter;
@@ -8,6 +9,7 @@ import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
+import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.dom4j.Document;
@@ -17,6 +19,10 @@ import org.eclipse.swt.widgets.Display;
 
 import com.dongluhitec.card.CommonUI;
 import com.dongluhitec.card.HardwareUtil;
+import com.dongluhitec.card.message.Message;
+import com.dongluhitec.card.message.MessageCodecFactory;
+import com.dongluhitec.card.message.MessageType;
+import com.google.common.base.Strings;
 
 public class ClientPresenter {
 
@@ -31,7 +37,7 @@ public class ClientPresenter {
 
 			acceptor.getFilterChain().addLast("logger", new LoggingFilter());
 			//指定编码过滤器 
-			acceptor.getFilterChain().addLast( "codec", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
+			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new TextLineCodecFactory(Charset.forName("UTF-8"))));
 			acceptor.setHandler(new MessageHandler());
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
@@ -55,25 +61,26 @@ public class ClientPresenter {
 		public void messageReceived(final IoSession session, Object message)
 				throws Exception {
 			String checkSubpackage = HardwareUtil.checkSubpackage(session, message);
-			if(checkSubpackage == null){
+			if(Strings.isNullOrEmpty(checkSubpackage)){
 				return;
 			}
-			clientUI.println_encode("收到消息密文:" + checkSubpackage);
-			if(checkSubpackage.startsWith("publicKey", 21)){
-				HardwareUtil.responsePublicKey(session,checkSubpackage);
+			Message msg = new Message(checkSubpackage);
+			clientUI.println_encode("收到消息密文:" + msg);
+			if(msg.getType() == MessageType.交换密钥){
+				HardwareUtil.responsePublicKey(session,msg);
 				return;
 			}
 			
-			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(checkSubpackage));
+			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(msg.getContent()));
 			Element rootElement = dom.getRootElement();
 			clientUI.println("收到消息明文:" + rootElement.asXML());
-			if(checkSubpackage.startsWith("deviceInfo", 21)){
+			if(msg.getType() == MessageType.成功){
 				String responseDeviceInfo = HardwareUtil.responseDeviceInfo(session,dom);
 				clientUI.println("发送消息明文:"+responseDeviceInfo);
 				return;
 			}
 			
-			if(checkSubpackage.startsWith("swipeCard",21)){
+			if(msg.getType() == MessageType.发送卡号){
 				Display.getDefault().asyncExec(new Runnable() {
 					
 					public void run() {
