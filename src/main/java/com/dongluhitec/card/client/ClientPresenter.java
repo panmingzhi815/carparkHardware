@@ -74,7 +74,7 @@ public class ClientPresenter {
 			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(msg.getContent()));
 			Element rootElement = dom.getRootElement();
 			clientUI.println("收到消息明文:" + rootElement.asXML());
-			if(msg.getType() == MessageType.成功){
+			if(msg.getType() == MessageType.设备信息){
 				String responseDeviceInfo = HardwareUtil.responseDeviceInfo(session,dom);
 				clientUI.println("发送消息明文:"+responseDeviceInfo);
 				return;

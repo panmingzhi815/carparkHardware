@@ -47,6 +47,7 @@ public class ServerUI {
 	private Button button_outsideScreenClose;
 	private Button button_outsideVoiceOpen;
 	private Button button_outsideVoiceClose;
+	private Button rb_false;
 
 	/**
 	 * Launch the application.
@@ -135,6 +136,10 @@ public class ServerUI {
 		rb_stop = new Button(composite, SWT.RADIO);
 		rb_stop.setText("停");
 		rb_stop.setBounds(158, 4, 39, 16);
+		
+		rb_false = new Button(composite, SWT.RADIO);
+		rb_false.setBounds(197, 4, 45, 16);
+		rb_false.setText("无效");
 		
 		Composite composite_1 = new Composite(group_3, SWT.BORDER);
 		composite_1.setBounds(10, 50, 242, 24);
@@ -415,20 +420,21 @@ public class ServerUI {
 		Element controlElement = rootElement.element("control");
 		
 		String gate = controlElement.element("gate").getText().trim();
+		rb_up.setSelection(false);
+		rb_down.setSelection(false);
+		rb_stop.setSelection(false);
+		rb_false.setSelection(false);
 		if(gate.equals("up")){
 			rb_up.setSelection(true);
-			rb_down.setSelection(false);
-			rb_stop.setSelection(false);
 		}
 		if(gate.equals("down")){
-			rb_up.setSelection(false);
 			rb_down.setSelection(true);
-			rb_stop.setSelection(false);
 		}
 		if(gate.equals("stop")){
-			rb_up.setSelection(false);
-			rb_down.setSelection(false);
 			rb_stop.setSelection(true);
+		}
+		if(gate.equals("false")){
+			rb_false.setSelection(true);
 		}
 		
 		String insideVoiceOpen = controlElement.element("insideVoice").getText();

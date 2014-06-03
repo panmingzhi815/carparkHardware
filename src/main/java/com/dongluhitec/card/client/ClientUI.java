@@ -170,7 +170,7 @@ public class ClientUI {
 		rb_false.setText("无效");
 		
 		Composite composite_5 = new Composite(group, SWT.BORDER);
-		composite_5.setBounds(10, 119, 390, 30);
+		composite_5.setBounds(10, 155, 390, 30);
 		
 		Label label_4 = new Label(composite_5, SWT.NONE);
 		label_4.setBounds(10, 6, 93, 12);
@@ -181,7 +181,7 @@ public class ClientUI {
 		text_outsideScreenText.setText("这是外置显示屏的内容");
 		
 		Composite composite_6 = new Composite(group, SWT.BORDER);
-		composite_6.setBounds(10, 155, 390, 30);
+		composite_6.setBounds(10, 119, 390, 30);
 		
 		Label label_5 = new Label(composite_6, SWT.NONE);
 		label_5.setText("内置显示屏内容:");
@@ -199,11 +199,7 @@ public class ClientUI {
 			}
 		});
 		btnNewButton.setBounds(339, 191, 72, 22);
-		btnNewButton.setText("\u53D1\u9001");
-		
-		Button button_11 = new Button(group, SWT.NONE);
-		button_11.setBounds(261, 191, 72, 22);
-		button_11.setText("\u91CD\u7F6E");
+		btnNewButton.setText("发送");
 		
 		Group group_1 = new Group(shlv, SWT.NONE);
 		group_1.setText("密文");

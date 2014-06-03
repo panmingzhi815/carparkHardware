@@ -118,7 +118,9 @@ public class HardwareUtil {
 			Element rootElement = state2Xml.getRootElement();
 			Element deviceElement = rootElement.addElement("device");
 			deviceElement.addElement("deviceName").setText(deviceName);
-			writeMsg(currentSession, rootElement.asXML());
+			String encode = rootElement.asXML();
+			Message msg = new Message(MessageType.设备控制, encode.length(), encode);
+			currentSession.write(msg);
 		}catch(Exception e){
 			throw new EncryptException("请求设备控制失败", e);
 		}
