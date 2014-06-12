@@ -64,8 +64,8 @@ public class ClientPresenter {
 			if(Strings.isNullOrEmpty(checkSubpackage)){
 				return;
 			}
+			clientUI.println_encode("收到消息密文:" + checkSubpackage);
 			Message msg = new Message(checkSubpackage);
-			clientUI.println_encode("收到消息密文:" + msg);
 			if(msg.getType() == MessageType.交换密钥){
 				HardwareUtil.responsePublicKey(session,msg);
 				return;

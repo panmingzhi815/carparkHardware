@@ -37,6 +37,7 @@ public class ServerPresenter {
 	private String clientPort;
 	private ConnectFuture cf;
 	private NioSocketConnector connector;
+	private String session_id;
 
 	public ServerPresenter(ServerUI serverUI) {
 		this.serverUI = serverUI;
@@ -59,6 +60,8 @@ public class ServerPresenter {
 
 	class AcceptorMessageHandler extends IoHandlerAdapter {
 
+		
+
 		@Override
 		public void sessionCreated(IoSession session) throws Exception {
 			serverUI.println("创建会话:" + session.getRemoteAddress());
@@ -73,7 +76,7 @@ public class ServerPresenter {
 				return;
 			}
 			Message msg = new Message(checkSubpackage);
-			serverUI.println("收到消息密文:" + msg.toString());
+			serverUI.println("收到消息密文:" + checkSubpackage);
 			
 			if(msg.getType() == MessageType.交换密钥){
 				HardwareUtil.responsePublicKey_server(session,msg);
@@ -81,7 +84,6 @@ public class ServerPresenter {
 			}
 			
 			final Document dom = DocumentHelper.parseText(HardwareUtil.decode(msg.getContent()));
-			Element rootElement = dom.getRootElement();
 			
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
@@ -99,8 +101,14 @@ public class ServerPresenter {
 				});
 			}
 			
-			if(rootElement.attributeValue("type").equals("result")){
-				
+			if(msg.getType() == MessageType.成功){
+				try{
+					Element rootElement = dom.getRootElement();
+					Element element = rootElement.element("session_id");
+					session_id = element.getText();
+				}catch(Exception e){
+					
+				}
 			}
 		}
 
@@ -175,7 +183,6 @@ public class ServerPresenter {
 		try {
 			Document dom = DocumentHelper.createDocument();
 			Element rootElement = dom.addElement("dongluCarpark");
-			rootElement.addAttribute("type", "deviceInfo");
 			Element station = rootElement.addElement("station");
 			station.addElement("account").setText("donglu");
 			station.addElement("password").setText( "liuhanzhong");
@@ -193,7 +200,7 @@ public class ServerPresenter {
 			device.addElement("deviceDisplaySupportChinese").setText(deviceDisplaySupportChinese+"");
 			serverUI.println_encode("发送消息明文"+dom.getRootElement().asXML());
 			String encode = HardwareUtil.encode(dom.getRootElement().asXML());
-			Message msg = new Message(MessageType.设备信息, encode.length(), encode);
+			Message msg = new Message(MessageType.设备信息, encode);
 			cf.getSession().write(msg.toString());
 		} catch (Exception e) {
 			CommonUI.error("错误", "发送设备信息失败");
@@ -206,11 +213,10 @@ public class ServerPresenter {
 		try{
 			Document document = DocumentHelper.createDocument();
 			Element dongluCarpark = document.addElement("dongluCarpark");
-			dongluCarpark.addAttribute("type", "publicKey");
 			Element publicKey = dongluCarpark.addElement("publicKey");
 			publicKey.setText(RSAUtils.getPublicKeyString());
 			String encode = document.getRootElement().asXML();
-			Message msg = new Message(MessageType.交换密钥, encode.length(), encode);
+			Message msg = new Message(MessageType.交换密钥, encode);
 			cf.getSession().write(msg.toString());
 		}catch(Exception e){
 			CommonUI.error("错误", "交换密钥失败");
@@ -222,8 +228,7 @@ public class ServerPresenter {
 		try{
 			Document document = DocumentHelper.createDocument();
 			Element root = document.addElement("dongluCarpark");
-			root.addAttribute("type", "swipeCard");
-			
+			root.addAttribute("session_id", session_id);
 			Element deviceElement = root.addElement("device");
 			deviceElement.addElement("deviceName").setText(deviceName);
 			
@@ -231,7 +236,7 @@ public class ServerPresenter {
 			root.addElement("CardReaderID").setText("");
 			serverUI.println_encode("发送消息明文"+document.getRootElement().asXML());
 			String encode = HardwareUtil.encode(document.getRootElement().asXML());
-			Message msg = new Message(MessageType.发送卡号, encode.length(), encode);
+			Message msg = new Message(MessageType.发送卡号, encode);
 			cf.getSession().write(msg.toString());
 		}catch(Exception e){
 			CommonUI.error("错误", "发送卡片信息失败");

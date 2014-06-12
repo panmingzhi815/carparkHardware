@@ -16,13 +16,12 @@ public class Message implements Serializable{
 	public Message(String msg){
 		this.type = MessageType.parse(msg.subSequence(0, 2));
 		this.length = Integer.valueOf(msg.substring(2, 10));
-		this.content = msg.substring(10);
+		this.content = msg.substring(10).replace("<?xml version=\"1.0\" encoding=\"GBK\"?>", "");
 	} 
 	
-	public Message(MessageType type, Integer length, String content) {
+	public Message(MessageType type,String content) {
 		this.type = type;
-		this.length = length;
-		this.content = content;
+		this.content = content.replace("<?xml version=\"1.0\" encoding=\"GBK\"?>", "");
 	}
 	
 	public MessageType getType() {
@@ -44,6 +43,10 @@ public class Message implements Serializable{
 
 	@Override
 	public String toString() {
+		if(!content.startsWith("<?xml version=\"1.0\" encoding=\"GBK\"?>")){			
+			content = "<?xml version=\"1.0\" encoding=\"GBK\"?>"+content;
+		}
+		length = content.length();
 		String format = String.format("%08d", length);
 		return type+format+content;
 	}

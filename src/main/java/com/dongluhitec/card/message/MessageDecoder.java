@@ -32,7 +32,7 @@ public class MessageDecoder extends CumulativeProtocolDecoder {
             //报文接收完毕
         	byte[] arr = new byte[size];
         	in.get(arr);
-        	Message msg = new Message(MessageType.parse(lengthStr.subSequence(0, 2)),size,new String(arr,Charsets.UTF_8));
+        	Message msg = new Message(MessageType.parse(lengthStr.subSequence(0, 2)),new String(arr,Charsets.UTF_8));
         	out.write(msg);
             return true;
         }

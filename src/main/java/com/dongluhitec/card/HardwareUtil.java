@@ -21,9 +21,12 @@ public class HardwareUtil {
 	private static String deviceName;
 	public static String he_publicKey;
 
+	private static String session_id;
+
 	public static String checkSubpackage(IoSession session, Object message) {
 		String msg = ((String) message).trim();
-		if (msg.startsWith("<dongluCarpark",10)) {
+
+		if (session.getAttribute(MSGKEY) == null) {
 			session.setAttribute(MSGKEY, "");
 		}
 		// 在此处对数据的分包进行拼接
@@ -31,7 +34,9 @@ public class HardwareUtil {
 		session.setAttribute(MSGKEY, oldValue + msg);
 		// 如果数据已经完整,早返回整个数据
 		if (msg.endsWith("</dongluCarpark>")) {
-			return ((String) session.getAttribute(MSGKEY));
+			String result = ((String) session.getAttribute(MSGKEY));
+			session.removeAttribute(MSGKEY);
+			return result;
 		}
 		// 数据不完整,则返回空
 		return null;
@@ -43,8 +48,8 @@ public class HardwareUtil {
 			Element element = dom.getRootElement().element("publicKey");
 			he_publicKey = element.getStringValue();
 			element.setText(RSAUtils.getPublicKeyString());
-			String encode = encode(dom.getRootElement().asXML());
-			Message msg = new Message(MessageType.交换密钥, encode.length(), encode);
+			String encode = dom.getRootElement().asXML();
+			Message msg = new Message(MessageType.交换密钥, encode);
 			session.write(msg);
 		} catch (Exception e) {
 			throw new EncryptException("客户端响应公钥失败", e);
@@ -69,9 +74,9 @@ public class HardwareUtil {
 			deviceName = dom.getRootElement().element("monitor").element("device")
 					.element("deviceName").getText();
 
-			String value = "<dongluCarpark type=\"result\"><result>true</result></dongluCarpark>";
+			String value = "<dongluCarpark type=\"result\"><result>true</result><session_id>"+session.getId()+"</session_id></dongluCarpark>";
 			String encode = encode(value);
-			Message msg = new Message(MessageType.成功, encode.length(), encode);
+			Message msg = new Message(MessageType.成功, encode);
 			session.write(msg);
 			return value;
 		}catch(Exception e){
@@ -89,7 +94,7 @@ public class HardwareUtil {
 			dom2.getRootElement().addElement("device").addElement("deviceName")
 					.setText(deviceName);
 			String encode = encode(dom2.getRootElement().asXML());
-			Message msg = new Message(MessageType.设备控制, encode.length(), encode);
+			Message msg = new Message(MessageType.设备控制, encode);
 			session.write(msg);
 			return dom2.getRootElement().asXML();
 		}catch(Exception e){
@@ -101,7 +106,7 @@ public class HardwareUtil {
 		try{
 			String value = "<dongluCarpark type=\"result\"><result>true</result></dongluCarpark>";
 			String encode = encode(value);
-			Message msg = new Message(MessageType.成功, encode.length(), encode);
+			Message msg = new Message(MessageType.成功, encode);
 			session.write(msg);
 			return value;
 		}catch(Exception e){
@@ -119,7 +124,7 @@ public class HardwareUtil {
 			Element deviceElement = rootElement.addElement("device");
 			deviceElement.addElement("deviceName").setText(deviceName);
 			String encode = rootElement.asXML();
-			Message msg = new Message(MessageType.设备控制, encode.length(), encode);
+			Message msg = new Message(MessageType.设备控制, encode);
 			currentSession.write(msg);
 		}catch(Exception e){
 			throw new EncryptException("请求设备控制失败", e);
@@ -176,6 +181,16 @@ public class HardwareUtil {
 	}
 
 	public static void main(String[] args) {
+	}
+
+	public static void responseSuccess(IoSession session, Document dom) {
+		try{
+			Element rootElement = dom.getRootElement();
+			Element element = rootElement.element("session_id");
+			session_id = element.getText();
+		}catch(Exception e){
+			
+		}
 	}
 
 }

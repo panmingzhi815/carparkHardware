@@ -252,7 +252,6 @@ public class ClientUI {
 	public Document state2Xml(){
 		Document document = DocumentHelper.createDocument();
 		Element rootElement = document.addElement("dongluCarpark");
-		rootElement.addAttribute("type", "deviceControl");
 		Element controlElement = rootElement.addElement("control");
 		
 		String gate = "";
