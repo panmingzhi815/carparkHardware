@@ -1,6 +1,8 @@
 package com.dongluhitec.card.message;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -15,8 +17,12 @@ public class Message implements Serializable{
 	
 	public Message(String msg){
 		this.type = MessageType.parse(msg.subSequence(0, 2));
-		this.length = Integer.valueOf(msg.substring(2, 10));
 		this.content = msg.substring(10).replace("<?xml version=\"1.0\" encoding=\"GBK\"?>", "");
+		try {
+			this.length = content.getBytes("UTF-8").length;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 	} 
 	
 	public Message(MessageType type,String content) {
@@ -38,7 +44,7 @@ public class Message implements Serializable{
 
 	public byte[] toBytes(){
 		String format = String.format("%08d", length);
-		return (type+format+content).replaceAll("[\\t\\n\\r]", "").getBytes(Charsets.UTF_8);
+		return (type+format+content).replaceAll("[\\t\\n\\r]", "").getBytes(Charset.forName("UTF-8"));
 	}
 
 	@Override
@@ -46,10 +52,13 @@ public class Message implements Serializable{
 		if(!content.startsWith("<?xml version=\"1.0\" encoding=\"GBK\"?>")){			
 			content = "<?xml version=\"1.0\" encoding=\"GBK\"?>"+content;
 		}
-		length = content.length();
+		try {
+			this.length = content.getBytes("UTF-8").length;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 		String format = String.format("%08d", length);
 		return type+format+content;
 	}
-	
 	
 }

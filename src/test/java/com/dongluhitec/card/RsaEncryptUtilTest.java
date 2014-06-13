@@ -32,4 +32,9 @@ public class RsaEncryptUtilTest {
         Assert.assertEquals(plaintext, plainText);
 	}
 	
+	public static void main(String[] args) {
+		String str = "<?xml version=\"1.0\" encoding=\"GBK\"?><dongluCarpark session_id=\"1\"><device><deviceName>测试设备1</deviceName></device><cardSerialNumber>NO12345678你</cardSerialNumber><CardReaderID></CardReaderID></dongluCarpark>";
+		System.out.println(str.length());
+	}
+	
 }
