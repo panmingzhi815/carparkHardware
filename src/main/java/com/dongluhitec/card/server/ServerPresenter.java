@@ -94,9 +94,14 @@ public class ServerPresenter {
 			if(msg.getType() == MessageType.设备控制){
 				String responseDeviceControl = HardwareUtil.responseDeviceControl(session,dom);
 				serverUI.println_encode("发送消息明文"+responseDeviceControl);
-				Display.getDefault().asyncExec(new Runnable() {
+				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
-						serverUI.state2Xml(dom);
+						try{
+							serverUI.state2Xml(dom);
+						}catch(Exception e){
+							e.printStackTrace();
+						}
+						
 					}
 				});
 			}
