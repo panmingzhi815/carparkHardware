@@ -74,7 +74,7 @@ public class HardwareUtil {
 			deviceName = dom.getRootElement().element("monitor").element("device")
 					.element("deviceName").getText();
 
-			String value = "<dongluCarpark type=\"result\"><result>true</result><session_id>"+session.getId()+"</session_id></dongluCarpark>";
+			String value = "<dongluCarpark><result>true</result><session_id>"+session.getId()+"</session_id></dongluCarpark>";
 			String encode = encode(value);
 			Message msg = new Message(MessageType.成功, encode);
 			session.write(msg);
@@ -87,6 +87,10 @@ public class HardwareUtil {
 	public static String responseSwipeCardInfo(IoSession session, Document dom,
 			Document dom2) {
 		try{
+			if (currentSession == null || currentSession.isConnected() == false
+					|| Strings.isNullOrEmpty(deviceName)) {
+				return "";
+			}
 			Element rootElement = dom.getRootElement();
 			String deviceName = rootElement.element("device").element("deviceName")
 					.getText();
@@ -95,7 +99,7 @@ public class HardwareUtil {
 					.setText(deviceName);
 			String encode = encode(dom2.getRootElement().asXML());
 			Message msg = new Message(MessageType.设备控制, encode);
-			session.write(msg);
+			currentSession.write(msg);
 			return dom2.getRootElement().asXML();
 		}catch(Exception e){
 			throw new EncryptException("响应刷卡", e);
