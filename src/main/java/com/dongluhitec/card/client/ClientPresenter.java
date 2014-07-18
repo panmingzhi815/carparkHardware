@@ -37,7 +37,11 @@ public class ClientPresenter {
 
 			acceptor.getFilterChain().addLast("logger", new LoggingFilter());
 			//指定编码过滤器 
-			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new TextLineCodecFactory(Charset.forName("UTF-8"))));
+			//指定编码过滤器 
+			TextLineCodecFactory lineCodec=new TextLineCodecFactory(Charset.forName("UTF-8"));
+			lineCodec.setDecoderMaxLineLength(1024*1024); //1M  
+			lineCodec.setEncoderMaxLineLength(1024*1024); //1M  
+			acceptor.getFilterChain().addLast("codec",new ProtocolCodecFilter(lineCodec));  //行文本解析   
 			acceptor.setHandler(new MessageHandler());
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);

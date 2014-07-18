@@ -87,10 +87,6 @@ public class HardwareUtil {
 	public static String responseSwipeCardInfo(IoSession session, Document dom,
 			Document dom2) {
 		try{
-			if (currentSession == null || currentSession.isConnected() == false
-					|| Strings.isNullOrEmpty(deviceName)) {
-				return "";
-			}
 			Element rootElement = dom.getRootElement();
 			String deviceName = rootElement.element("device").element("deviceName")
 					.getText();
@@ -99,7 +95,7 @@ public class HardwareUtil {
 					.setText(deviceName);
 			String encode = encode(dom2.getRootElement().asXML());
 			Message msg = new Message(MessageType.设备控制, encode);
-			currentSession.write(msg);
+			session.write(msg);
 			return dom2.getRootElement().asXML();
 		}catch(Exception e){
 			throw new EncryptException("响应刷卡", e);
