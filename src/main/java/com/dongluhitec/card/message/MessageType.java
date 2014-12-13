@@ -2,7 +2,7 @@ package com.dongluhitec.card.message;
 
 public enum MessageType {
 
-	交换密钥("00"),设备信息("01"),发送卡号("02"),设备控制("03"),成功("04");
+	交换密钥("00"),设备信息("01"),发送卡号("02"),设备控制("03"),成功("04"),广告("05");
 	
 	private String code;
 	MessageType(String code){
