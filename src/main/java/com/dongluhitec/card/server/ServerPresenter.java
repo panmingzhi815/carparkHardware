@@ -94,6 +94,16 @@ public class ServerPresenter {
 			if(rootElement.attributeValue("type").equals("result")){
 				
 			}
+			
+			if(rootElement.attributeValue("type").equals("ad")){
+				String responseDeviceControl = HardwareUtil.responseDeviceControl(session,dom);
+				serverUI.println_encode("发送消息明文"+responseDeviceControl);
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						serverUI.ad2Xml(dom);
+					}
+				});
+			}
 		}
 
 		@Override

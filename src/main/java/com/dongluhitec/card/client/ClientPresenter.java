@@ -113,4 +113,8 @@ public class ClientPresenter {
 		HardwareUtil.requestDeviceControl(clientUI.state2Xml());
 	}
 
+	public void sendAD() {
+		HardwareUtil.requestAdControl(clientUI.ad2Xml());
+	}
+
 }

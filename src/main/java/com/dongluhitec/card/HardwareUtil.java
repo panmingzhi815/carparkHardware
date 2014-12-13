@@ -112,6 +112,21 @@ public class HardwareUtil {
 			throw new EncryptException("请求设备控制失败", e);
 		}
 	}
+	
+	public static void requestAdControl(Document state2Xml) {
+		try{
+			if (currentSession == null || currentSession.isConnected() == false
+					|| Strings.isNullOrEmpty(deviceName)) {
+				return;
+			}
+			Element rootElement = state2Xml.getRootElement();
+			Element deviceElement = rootElement.addElement("device");
+			deviceElement.addElement("deviceName").setText(deviceName);
+			writeMsg(currentSession, rootElement.asXML());
+		}catch(Exception e){
+			throw new EncryptException("请求设置广告语失败", e);
+		}
+	}
 
 	public static String formatDateTime(Date date) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
