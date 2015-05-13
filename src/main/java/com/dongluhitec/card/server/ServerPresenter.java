@@ -94,6 +94,16 @@ public class ServerPresenter {
 			if(rootElement.attributeValue("type").equals("result")){
 				
 			}
+			
+			if(rootElement.attributeValue("type").equals("ad")){
+				String responseDeviceControl = HardwareUtil.responseDeviceControl(session,dom);
+				serverUI.println_encode("发送消息明文"+responseDeviceControl);
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						serverUI.ad2Xml(dom);
+					}
+				});
+			}
 		}
 
 		@Override
@@ -175,7 +185,6 @@ public class ServerPresenter {
 			station.addElement("stationIP").setText( HardwareUtil.getLocalIP());
 			station.addElement("stationTime").setText( HardwareUtil.formatDateTime(new Date()));
 			
-			
 			Element monitor = rootElement.addElement("monitor");;
 			Element device = monitor.addElement("device");
 			device.addElement("deviceName").setText(deviceName);
@@ -190,8 +199,7 @@ public class ServerPresenter {
 			e.printStackTrace();
 		}
 	}
-	
-	
+		
 	public void changeDecretKey() {
 		try{
 			Document document = DocumentHelper.createDocument();

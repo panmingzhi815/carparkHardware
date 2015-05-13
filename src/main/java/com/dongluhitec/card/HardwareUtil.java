@@ -20,7 +20,7 @@ public class HardwareUtil {
 	public static String he_publicKey;
 
 	public static String checkSubpackage(IoSession session, Object message) {
-		String msg = ((String) message).trim();
+		String msg = message.toString().trim();
 		if (msg.startsWith("<dongluCarpark")) {
 			session.setAttribute(MSGKEY, "");
 		}
@@ -110,6 +110,21 @@ public class HardwareUtil {
 			writeMsg(currentSession, rootElement.asXML());
 		}catch(Exception e){
 			throw new EncryptException("请求设备控制失败", e);
+		}
+	}
+	
+	public static void requestAdControl(Document state2Xml) {
+		try{
+			if (currentSession == null || currentSession.isConnected() == false
+					|| Strings.isNullOrEmpty(deviceName)) {
+				return;
+			}
+			Element rootElement = state2Xml.getRootElement();
+			Element deviceElement = rootElement.addElement("device");
+			deviceElement.addElement("deviceName").setText(deviceName);
+			writeMsg(currentSession, rootElement.asXML());
+		}catch(Exception e){
+			throw new EncryptException("请求设置广告语失败", e);
 		}
 	}
 
