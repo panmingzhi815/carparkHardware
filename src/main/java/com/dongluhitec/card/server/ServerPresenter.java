@@ -1,7 +1,14 @@
 package com.dongluhitec.card.server;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.mina.core.future.ConnectFuture;
@@ -10,7 +17,6 @@ import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
 import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
@@ -22,15 +28,19 @@ import org.eclipse.swt.widgets.Display;
 
 import com.dongluhitec.card.CommonUI;
 import com.dongluhitec.card.HardwareUtil;
+import com.dongluhitec.card.ImageUtil;
 import com.dongluhitec.card.RSAUtils;
 import com.dongluhitec.card.message.Message;
-import com.dongluhitec.card.message.MessageCodecFactory;
 import com.dongluhitec.card.message.MessageType;
 import com.google.common.base.Strings;
 
 public class ServerPresenter {
 
 	private static final int PORT = 9124;
+	
+	private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyddMM");
+	private static SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("yyyyddMMHHmmss");
+	
 	public ServerUI serverUI;
 	private IoAcceptor acceptor;
 	private String clientIP;
@@ -87,13 +97,13 @@ public class ServerPresenter {
 			
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
-					serverUI.println_encode("收到消息明文"+dom.getRootElement().asXML());
+					serverUI.println("收到消息明文"+dom.getRootElement().asXML());
 				}
 			});
 			
 			if(msg.getType() == MessageType.设备控制){
 				String responseDeviceControl = HardwareUtil.responseDeviceControl(session,dom);
-				serverUI.println_encode("发送消息明文"+responseDeviceControl);
+				serverUI.println("发送消息明文"+responseDeviceControl);
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
 						try{
@@ -118,7 +128,7 @@ public class ServerPresenter {
 			
 			if(msg.getType() == MessageType.广告){
 				String responseDeviceControl = HardwareUtil.responseDeviceControl(session,dom);
-				serverUI.println_encode("发送消息明文"+responseDeviceControl);
+				serverUI.println("发送消息明文"+responseDeviceControl);
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						serverUI.ad2Xml(dom);
@@ -213,7 +223,7 @@ public class ServerPresenter {
 			device.addElement("deviceInOutType").setText(deviceDisplayAndVoiceInside+"");
 			device.addElement("deviceDisplayAndVoiceOutside").setText(deviceDisplayAndVoiceOutside+"");
 			device.addElement("deviceDisplaySupportChinese").setText(deviceDisplaySupportChinese+"");
-			serverUI.println_encode("发送消息明文"+dom.getRootElement().asXML());
+			serverUI.println("发送消息明文"+dom.getRootElement().asXML());
 			String encode = HardwareUtil.encode(dom.getRootElement().asXML());
 			Message msg = new Message(MessageType.设备信息, encode);
 			cf.getSession().write(msg.toString());
@@ -249,7 +259,7 @@ public class ServerPresenter {
 			
 			root.addElement("cardSerialNumber").setText(cardNO);
 			root.addElement("CardReaderID").setText("");
-			serverUI.println_encode("发送消息明文"+document.getRootElement().asXML());
+			serverUI.println("发送消息明文"+document.getRootElement().asXML());
 			String encode = HardwareUtil.encode(document.getRootElement().asXML());
 			Message msg = new Message(MessageType.发送卡号, encode);
 			cf.getSession().write(msg.toString());
@@ -261,6 +271,42 @@ public class ServerPresenter {
 	
 	public static void main(String[] args) {
 		System.out.println(RSAUtils.getPublicKeyString());
+	}
+
+	public void sendPlateNO(String plateNo, String deviceName) {
+		try {
+			String format = simpleDateFormat.format(new Date());
+			String floder = "192.168.12.101" + File.separator + format;
+			Path path = Paths.get(floder);
+			if(Files.notExists(path,LinkOption.NOFOLLOW_LINKS)){
+				Files.createDirectories(path);
+			}
+			
+			Path bigImagePath = Paths.get(floder, simpleDateFormat2.format(new Date())+"_big.jpg");
+			byte[] bigImage = ImageUtil.getBytes("big.jpg");
+			Files.write(bigImagePath, bigImage ,StandardOpenOption.CREATE);
+			
+			Path smallImagePath = Paths.get(floder, simpleDateFormat2.format(new Date())+"_small.jpg");
+			byte[] smallImage = ImageUtil.getBytes("plate.jpg");
+			Files.write(smallImagePath, smallImage ,StandardOpenOption.CREATE);
+			
+			Document document = DocumentHelper.createDocument();
+			Element root = document.addElement("dongluCarpark");
+
+			Element deviceElement = root.addElement("device");
+			deviceElement.addElement("deviceName").setText(deviceName);
+
+			root.addElement("plateCode").setText(plateNo);
+			root.addElement("plateBigImage").setText(bigImagePath.toUri().getPath().substring(1));
+			root.addElement("plateSmallImage").setText(smallImagePath.toUri().getPath().substring(1));
+			
+			serverUI.println("发送消息明文"+document.getRootElement().asXML());
+			String encode = HardwareUtil.encode(document.getRootElement().asXML());
+			Message msg = new Message(MessageType.发送车牌, encode);
+			cf.getSession().write(msg.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

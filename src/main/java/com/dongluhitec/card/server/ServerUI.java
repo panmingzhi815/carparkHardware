@@ -20,6 +20,7 @@ import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.FillLayout;
 
 public class ServerUI {
 
@@ -27,7 +28,6 @@ public class ServerUI {
 	protected Shell shell;
 	private Text txt_cardNO;
 	private Text text_1;
-	private Text text_2;
 	private Text text_insideScreenText;
 	private Text text_outsideScreenText;
 	private Text txt_ip;
@@ -53,6 +53,7 @@ public class ServerUI {
 	private Button button_outsideVoiceOpen;
 	private Button button_outsideVoiceClose;
 	private Text text_ad;
+	private Text text_2;
 
 	/**
 	 * Launch the application.
@@ -95,26 +96,16 @@ public class ServerUI {
 		shell.setLayout(new FormLayout());
 		
 		Group group_1 = new Group(shell, SWT.NONE);
+		group_1.setLayout(new FillLayout(SWT.HORIZONTAL));
 		FormData fd_group_1 = new FormData();
-		fd_group_1.right = new FormAttachment(0, 265);
-		fd_group_1.top = new FormAttachment(0, 452);
+		fd_group_1.bottom = new FormAttachment(0, 631);
+		fd_group_1.right = new FormAttachment(0, 513);
+		fd_group_1.top = new FormAttachment(0, 467);
 		fd_group_1.left = new FormAttachment(0, 10);
 		group_1.setLayoutData(fd_group_1);
 		group_1.setText("密文");
 		
 		text_1 = new Text(group_1, SWT.BORDER | SWT.WRAP | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
-		text_1.setBounds(10, 20, 235, 156);
-		
-		Group group_2 = new Group(shell, SWT.NONE);
-		FormData fd_group_2 = new FormData();
-		fd_group_2.right = new FormAttachment(0, 511);
-		fd_group_2.top = new FormAttachment(0, 452);
-		fd_group_2.left = new FormAttachment(0, 271);
-		group_2.setLayoutData(fd_group_2);
-		group_2.setText("译文");
-		
-		text_2 = new Text(group_2, SWT.BORDER | SWT.WRAP | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
-		text_2.setBounds(10, 20, 220, 156);
 		
 		Button button_3 = new Button(shell, SWT.NONE);
 		FormData fd_button_3 = new FormData();
@@ -362,9 +353,9 @@ public class ServerUI {
 		
 		Group group_4 = new Group(shell, SWT.NONE);
 		FormData fd_group_4 = new FormData();
+		fd_group_4.right = new FormAttachment(100, -12);
+		fd_group_4.left = new FormAttachment(0, 10);
 		fd_group_4.top = new FormAttachment(0, 54);
-		fd_group_4.left = new FormAttachment(group_1, 0, SWT.LEFT);
-		fd_group_4.right = new FormAttachment(0, 511);
 		group_4.setLayoutData(fd_group_4);
 		group_4.setText("设备信息");
 		group_4.setLayout(new FormLayout());
@@ -499,7 +490,7 @@ public class ServerUI {
 		
 		Group group_5 = new Group(shell, SWT.NONE);
 		FormData fd_group_5 = new FormData();
-		fd_group_5.bottom = new FormAttachment(0, 446);
+		fd_group_5.bottom = new FormAttachment(group_1, -6);
 		fd_group_5.right = new FormAttachment(0, 511);
 		fd_group_5.top = new FormAttachment(0, 401);
 		fd_group_5.left = new FormAttachment(0, 10);
@@ -514,7 +505,7 @@ public class ServerUI {
 		label.setText("卡号:");
 		
 		txt_cardNO = new Text(group_5, SWT.BORDER);
-		txt_cardNO.setLayoutData(new RowData(150, SWT.DEFAULT));
+		txt_cardNO.setLayoutData(new RowData(80, SWT.DEFAULT));
 		txt_cardNO.setText("NO12345678");
 		
 		Button button_2 = new Button(group_5, SWT.NONE);
@@ -528,6 +519,24 @@ public class ServerUI {
 			}
 		});
 		button_2.setText("发送卡号");
+		
+		Label label_14 = new Label(group_5, SWT.NONE);
+		label_14.setText("车牌:");
+		
+		text_2 = new Text(group_5, SWT.BORDER);
+		text_2.setLayoutData(new RowData(80, SWT.DEFAULT));
+		
+		Button btnNewButton = new Button(group_5, SWT.NONE);
+		btnNewButton.setText("发送车牌");
+		btnNewButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if(text_2.getText().trim().equals("")){
+					return;
+				}
+				presenter.sendPlateNO(text_2.getText().trim(),txt_deviceName.getText().trim());
+			}
+		});
 	}
 	
 	public void println(final String text){
@@ -537,17 +546,6 @@ public class ServerUI {
 					text_1.setText("");
 				}
 				text_1.append("\n"+text+"\n");
-			}
-		});
-	}
-	
-	public void println_encode(final String text){
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				if(text_2.getText().length() > 5000){
-					text_2.setText("");
-				}
-				text_2.append("\n"+text+"\n");
 			}
 		});
 	}

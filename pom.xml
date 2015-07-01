@@ -8,7 +8,7 @@
 	<repositories>
 		<repository>
 			<id>swt-repo</id>
-			<url>https://swt-repo.googlecode.com/svn/repo/</url>
+			<url>https://raw.githubusercontent.com/Xianguang-Zhou/swt-maven-repository/master/release/</url>
 		</repository>
 	</repositories>
 

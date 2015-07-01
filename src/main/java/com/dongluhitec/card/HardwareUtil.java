@@ -210,4 +210,21 @@ public class HardwareUtil {
 		}
 	}
 
+	public static String responsePlateInfo(IoSession session, Document dom, Document dom2) {
+		try{
+			Element rootElement = dom.getRootElement();
+			String deviceName = rootElement.element("device").element("deviceName")
+					.getText();
+
+			dom2.getRootElement().addElement("device").addElement("deviceName")
+					.setText(deviceName);
+			String encode = encode(dom2.getRootElement().asXML());
+			Message msg = new Message(MessageType.设备控制, encode);
+			session.write(msg);
+			return dom2.getRootElement().asXML();
+		}catch(Exception e){
+			throw new EncryptException("响应刷卡", e);
+		}
+	}
+
 }

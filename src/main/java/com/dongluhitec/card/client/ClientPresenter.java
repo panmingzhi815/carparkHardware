@@ -82,13 +82,20 @@ public class ClientPresenter {
 				String responseDeviceInfo = HardwareUtil.responseDeviceInfo(session,dom);
 				clientUI.println("发送消息明文:"+responseDeviceInfo);
 				return;
-			}
-			
-			if(msg.getType() == MessageType.发送卡号){
+			} else if(msg.getType() == MessageType.发送卡号){
 				Display.getDefault().asyncExec(new Runnable() {
 					
 					public void run() {
 						String responseSwipeCardInfo = HardwareUtil.responseSwipeCardInfo(session,dom,clientUI.state2Xml());
+						clientUI.println("发送消息明文:" + responseSwipeCardInfo);
+					}
+				});				
+				return;
+			}else if(msg.getType() == MessageType.发送车牌){
+				Display.getDefault().asyncExec(new Runnable() {
+					
+					public void run() {
+						String responseSwipeCardInfo = HardwareUtil.responsePlateInfo(session,dom,clientUI.state2Xml());
 						clientUI.println("发送消息明文:" + responseSwipeCardInfo);
 					}
 				});				
