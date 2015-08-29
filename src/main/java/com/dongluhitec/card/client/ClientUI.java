@@ -25,6 +25,8 @@ import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.widgets.DateTime;
 
 public class ClientUI {
+	public static int port = 8129;
+
 	private ClientPresenter presenter;
 	protected Shell shlv;
 	private Text text_outsideScreenText;
@@ -50,6 +52,9 @@ public class ClientUI {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		if(args.length > 0 && args[0] != null){
+			ClientUI.port = Integer.valueOf(args[0]);
+		}
 		try {
 			ClientUI window = new ClientUI();
 			window.open();

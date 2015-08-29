@@ -26,7 +26,6 @@ import com.google.common.base.Strings;
 
 public class ClientPresenter {
 
-	private static final int PORT = 9123;
 	public ClientUI clientUI;
 	private IoAcceptor acceptor;
 
@@ -45,8 +44,8 @@ public class ClientPresenter {
 			acceptor.setHandler(new MessageHandler());
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
-			acceptor.bind(new InetSocketAddress(PORT));
-			clientUI.println("绑定本地服务端口:" + PORT);
+			acceptor.bind(new InetSocketAddress(ClientUI.port));
+			clientUI.println("绑定本地服务端口:" + ClientUI.port);
 		} catch (Exception e) {
 			e.printStackTrace();
 			CommonUI.error("错误", "开始监听服务器失败!");

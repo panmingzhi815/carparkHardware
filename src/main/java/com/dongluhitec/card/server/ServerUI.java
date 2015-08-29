@@ -322,7 +322,7 @@ public class ServerUI {
 		
 		txt_port = new Text(group, SWT.BORDER);
 		txt_port.setLayoutData(new RowData(50, SWT.DEFAULT));
-		txt_port.setText("9123");
+		txt_port.setText("8129");
 		
 		Button button_1 = new Button(group, SWT.NONE);
 		button_1.addSelectionListener(new SelectionAdapter() {
